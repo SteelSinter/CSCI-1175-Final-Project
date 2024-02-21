@@ -17,20 +17,23 @@ public class Server extends Application {
 	public void start(Stage mainStage) {
 		ta.setEditable(false);
 		Scene scene = new Scene(ta, 200, 300);
-		mainStage.setTitle("Server");
-		mainStage.setScene(scene);
-		mainStage.show();
 		
+		// Create server socket
 		try {
 			serverSocket = new ServerSocket(8000);
 		} catch (IOException e) {
 			addStatus(e.toString());
 		}
+		
 		// Connect to clients
 		addStatus("Waiting for connections...");
 		new Thread(() -> {
 			waitForClients();
 		}).start();
+		
+		mainStage.setTitle("Server");
+		mainStage.setScene(scene);
+		mainStage.show();
 		
 	}
 	
