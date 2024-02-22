@@ -1,5 +1,6 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -19,6 +20,7 @@ public class Client extends Application {
 	public TextArea taMessage = new TextArea();
 	TextField tfPort = new TextField();
 	TextField tfAddress = new TextField();
+	TextField tfUserName = new TextField();
 	DataInputStream in;
 	DataOutputStream out;
 	
@@ -31,6 +33,7 @@ public class Client extends Application {
 		taChat.setPrefWidth(300);
 		taChat.setWrapText(true);
 		taChat.setMaxWidth(400);
+		taChat.setPrefHeight(250);
 		
 		taMessage.setMaxHeight(50);
 		taMessage.setMaxWidth(400);
@@ -39,11 +42,13 @@ public class Client extends Application {
 		tfPort.setPromptText("Port");
 		tfPort.setText(String.valueOf(8000));
 		tfAddress.setPromptText("Address");
-		
+		tfAddress.setText("localhost");
+		tfUserName.setPromptText("User name");
+		tfUserName.setText("User");
 		
 		gridPane.add(taChat, 0, 0);
 		gridPane.add(taMessage, 0, 1);
-		gridPane.add(new VBox(tfPort, tfAddress, btConnect), 1, 0);
+		gridPane.add(new VBox(tfPort, tfAddress, btConnect, tfUserName), 1, 0);
 		
 		Scene scene = new Scene(gridPane, 500, 300);
 		
@@ -83,7 +88,7 @@ public class Client extends Application {
 	
 	public void sendMessage() {
 		try {
-			out.writeUTF(taMessage.getText().trim());
+			out.writeUTF(tfUserName.getText() + ": " + taMessage.getText().trim());
 			out.flush();
 			taMessage.clear();
 		} catch (SocketException ex) {
@@ -103,6 +108,8 @@ public class Client extends Application {
 		new Thread(() -> {
 			try {
 				listenForData();
+			} catch (EOFException e) {
+				addStatus("Server disconnected");
 			} catch (Exception e) {
 				addStatus(e.toString());
 			}

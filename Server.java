@@ -32,12 +32,13 @@ public class Server extends Application {
 		btStop.setTextFill(javafx.scene.paint.Color.WHITE);
 		
 		pane.getChildren().addAll(ta, btStop);
-		Scene scene = new Scene(pane , 400, 300);
+		Scene scene = new Scene(pane , 500, 300);
 		
 		// Create server socket
 		try {
 			serverSocket = new ServerSocket(8000);
-			addStatus("Server " + InetAddress.getLocalHost() + " hosted on port " + serverSocket.getLocalPort());
+			addStatus("Server " + InetAddress.getLocalHost() + " hosted on port " 
+			+ serverSocket.getLocalPort());
 		} catch (IOException e) {
 			addStatus(e.toString());
 			addStatus("Server was unable to create socket");
@@ -77,9 +78,9 @@ public class Server extends Application {
 	public void connectToClient(Socket socket) {
 		DataInputStream in;
 		DataOutputStream out;
-		addStatus("Connected to " + socket.getInetAddress().getHostAddress());
 		clients.add(socket);
 		try {
+			addStatus("Connected to " + socket.getInetAddress());
 			in = new DataInputStream(socket.getInputStream());
 			out = new DataOutputStream(socket.getOutputStream());
 			while (!serverStopped) {
@@ -88,7 +89,7 @@ public class Server extends Application {
 				for (Socket s: clients) {
 					DataOutputStream data = new DataOutputStream(s.getOutputStream());
 					data.writeUTF(str);
-					data.close();
+					Thread.yield();
 				}
 			}
 		} catch (EOFException e) {
@@ -102,7 +103,7 @@ public class Server extends Application {
 	}
 	
 	public void addStatus(String s) {
-		ta.appendText(s + "\r\n");
+		ta.appendText(new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date()) + ": " + s + "\r\n");
 	}
 
 	public static void main(String[] args) {
