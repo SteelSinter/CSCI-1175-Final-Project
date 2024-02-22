@@ -2,6 +2,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 
 import javafx.application.Application;
@@ -14,17 +15,17 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class Client extends Application {
-	TextArea taChat = new TextArea();
+	public TextArea taChat = new TextArea();
+	public TextArea taMessage = new TextArea();
+	TextField tfPort = new TextField();
+	TextField tfAddress = new TextField();
 	DataInputStream in;
 	DataOutputStream out;
 	
 	@Override
 	public void start(Stage mainStage) {
-		TextArea taMessage = new TextArea();
 		GridPane gridPane = new GridPane();
 		Button btConnect = new Button("Connect");
-		TextField tfPort = new TextField();
-		TextField tfAddress = new TextField();
 		
 		taChat.setEditable(false);
 		taChat.setPrefWidth(300);
@@ -36,6 +37,7 @@ public class Client extends Application {
 		taMessage.setWrapText(true);
 		
 		tfPort.setPromptText("Port");
+		tfPort.setText(String.valueOf(8000));
 		tfAddress.setPromptText("Address");
 		
 		
@@ -48,7 +50,8 @@ public class Client extends Application {
 		btConnect.setOnAction(e -> {
 			new Thread(() -> {
 				try {
-					Socket socket = new Socket("localhost" , 8000);
+					Socket socket = new Socket(new String(
+							tfAddress.getText().trim()) , Integer.valueOf(tfPort.getText()));
 					addStatus("Connected to " + socket.getInetAddress());
 					connectToServer(socket);
 				} catch (NumberFormatException ex) {
@@ -63,15 +66,9 @@ public class Client extends Application {
 		
 		taMessage.setOnKeyPressed(e -> {
 			if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
-				try {
-					out.writeChars(taMessage.getText().trim());
-				}
-				catch (IOException ex) {
-					addStatus(ex.toString());
-				}
-				catch (NullPointerException ex) {
-					addStatus(ex.toString());
-				}
+				new Thread(() ->{
+					sendMessage();
+				}).start();
 			}
 		});
 		
@@ -84,10 +81,38 @@ public class Client extends Application {
 		taChat.appendText(s + "\r\n");
 	}
 	
+	public void sendMessage() {
+		try {
+			out.writeUTF(taMessage.getText().trim());
+			out.flush();
+			taMessage.clear();
+		} catch (SocketException ex) {
+			addStatus("Server disconnected");
+		}
+		catch (IOException ex) {
+			addStatus(ex.toString());
+		}
+		catch (NullPointerException ex) {
+			addStatus("Message was not sent");
+		}
+	}
+	
 	public void connectToServer(Socket socket) throws IOException {
-		
 		in = new DataInputStream(socket.getInputStream());
 		out = new DataOutputStream(socket.getOutputStream());
+		new Thread(() -> {
+			try {
+				listenForData();
+			} catch (InterruptedException e) {
+				addStatus(e.toString());
+			}
+		}).start();
+	}
+	
+	public void listenForData() throws InterruptedException {
+		while (true) {
+			Thread.currentThread().sleep(100);
+		}
 	}
 
 	public static void main(String[] args) {

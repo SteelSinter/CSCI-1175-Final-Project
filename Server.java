@@ -1,5 +1,6 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -16,6 +17,7 @@ public class Server extends Application {
 	public ServerSocket serverSocket;
 	public TextArea ta = new TextArea();
 	public boolean serverStopped = false;
+	java.util.ArrayList<Socket> clients = new java.util.ArrayList<Socket>();
 	
 	@Override
 	public void start(Stage mainStage) {
@@ -24,6 +26,10 @@ public class Server extends Application {
 		ta.setEditable(false);
 		ta.setStyle("");
 		ta.setWrapText(true);
+		ta.setPrefHeight(500);
+		
+		btStop.setStyle("-fx-background-color: red;");
+		btStop.setTextFill(javafx.scene.paint.Color.WHITE);
 		
 		pane.getChildren().addAll(ta, btStop);
 		Scene scene = new Scene(pane , 400, 300);
@@ -72,15 +78,27 @@ public class Server extends Application {
 		DataInputStream in;
 		DataOutputStream out;
 		addStatus("Connected to " + socket.getInetAddress().getHostAddress());
+		clients.add(socket);
 		try {
 			in = new DataInputStream(socket.getInputStream());
 			out = new DataOutputStream(socket.getOutputStream());
 			while (!serverStopped) {
-				addStatus(String.valueOf(in.read()));
+				String str = in.readUTF();
+				addStatus(str);
+				for (Socket s: clients) {
+					DataOutputStream data = new DataOutputStream(s.getOutputStream());
+					data.writeUTF(str);
+					data.close();
+				}
 			}
+		} catch (EOFException e) {
+			addStatus("Client " + socket.getInetAddress().getHostName() + " disconnected");
+			clients.remove(socket);
 		} catch (IOException e) {
 			addStatus(e.toString());
+			clients.remove(socket);
 		}
+		clients.remove(socket);
 	}
 	
 	public void addStatus(String s) {
