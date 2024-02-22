@@ -13,8 +13,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class Server extends Application {
-	ServerSocket serverSocket;
-	TextArea ta = new TextArea();
+	public ServerSocket serverSocket;
+	public TextArea ta = new TextArea();
 	public boolean serverStopped = false;
 	
 	@Override
@@ -23,9 +23,10 @@ public class Server extends Application {
 		Button btStop = new Button("Shutdown server");
 		ta.setEditable(false);
 		ta.setStyle("");
+		ta.setWrapText(true);
 		
 		pane.getChildren().addAll(ta, btStop);
-		Scene scene = new Scene(pane , 300, 300);
+		Scene scene = new Scene(pane , 400, 300);
 		
 		// Create server socket
 		try {
@@ -34,6 +35,7 @@ public class Server extends Application {
 		} catch (IOException e) {
 			addStatus(e.toString());
 			addStatus("Server was unable to create socket");
+			System.exit(1);
 		}
 		
 		btStop.setOnAction(e -> {
@@ -59,7 +61,6 @@ public class Server extends Application {
 				Socket socket = serverSocket.accept();
 				new Thread(() -> {
 					connectToClient(socket);
-					addStatus("Connected to " + socket.getInetAddress());
 				}).start();
 			} catch (IOException e) {
 				addStatus(e.toString());
@@ -70,7 +71,7 @@ public class Server extends Application {
 	public void connectToClient(Socket socket) {
 		DataInputStream in;
 		DataOutputStream out;
-		
+		addStatus("Connected to " + socket.getInetAddress().getHostAddress());
 		try {
 			in = new DataInputStream(socket.getInputStream());
 			out = new DataOutputStream(socket.getOutputStream());

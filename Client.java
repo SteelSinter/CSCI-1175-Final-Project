@@ -15,6 +15,8 @@ import javafx.stage.Stage;
 
 public class Client extends Application {
 	TextArea taChat = new TextArea();
+	DataInputStream in;
+	DataOutputStream out;
 	
 	@Override
 	public void start(Stage mainStage) {
@@ -52,11 +54,25 @@ public class Client extends Application {
 				} catch (NumberFormatException ex) {
 					addStatus("Invalid port or address");
 				} catch (UnknownHostException ex) {
-					addStatus("Unable to connect");
+					addStatus("Server not found");
 				} catch (IOException ex) {
 					addStatus(ex.toString());
 				}
 			}).start();
+		});
+		
+		taMessage.setOnKeyPressed(e -> {
+			if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
+				try {
+					out.writeChars(taMessage.getText().trim());
+				}
+				catch (IOException ex) {
+					addStatus(ex.toString());
+				}
+				catch (NullPointerException ex) {
+					addStatus(ex.toString());
+				}
+			}
 		});
 		
 		mainStage.setScene(scene);
@@ -68,16 +84,10 @@ public class Client extends Application {
 		taChat.appendText(s + "\r\n");
 	}
 	
-	public void connectToServer(Socket socket) {
-		DataInputStream in;
-		DataOutputStream out;
+	public void connectToServer(Socket socket) throws IOException {
 		
-		try {
-			in = new DataInputStream(socket.getInputStream());
-			out = new DataOutputStream(socket.getOutputStream());
-		} catch (IOException e) {
-			addStatus(e.toString());
-		}
+		in = new DataInputStream(socket.getInputStream());
+		out = new DataOutputStream(socket.getOutputStream());
 	}
 
 	public static void main(String[] args) {
