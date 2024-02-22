@@ -103,15 +103,16 @@ public class Client extends Application {
 		new Thread(() -> {
 			try {
 				listenForData();
-			} catch (InterruptedException e) {
+			} catch (Exception e) {
 				addStatus(e.toString());
 			}
 		}).start();
 	}
 	
-	public void listenForData() throws InterruptedException {
+	public void listenForData() throws Exception {
 		while (true) {
-			Thread.currentThread().sleep(100);
+			Thread.sleep(100);
+			addStatus(in.readUTF());
 		}
 	}
 
