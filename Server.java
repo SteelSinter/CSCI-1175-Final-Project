@@ -19,7 +19,7 @@ public class Server extends Application {
 	public ServerSocket serverSocket;
 	public TextArea ta = new TextArea();
 	public boolean serverStopped = false;
-	java.util.ArrayList<Socket> clients = new java.util.ArrayList<Socket>();
+	java.util.HashMap<Socket, ObjectOutputStream> sockets = new java.util.HashMap<Socket, ObjectOutputStream>();
 	
 	@Override
 	public void start(Stage mainStage) {
@@ -80,31 +80,31 @@ public class Server extends Application {
 	public void connectToClient(Socket socket) {
 		ObjectInputStream in;
 		ObjectOutputStream out;
-		clients.add(socket);
 		try {
 			addStatus("Connected to " + socket.getInetAddress());
 			in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
-			out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));//////////
+			out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));
+			sockets.put(socket, out); // Add the socket and OutputStream to a list.
 			while (!serverStopped) {
 				Object o = in.readObject();//	The problem is that this needs a way to get each output
 				addStatus(o.toString()); // 	stream to send the objects back to the clients.
-				for (Socket s: clients) { //	This is attempting to use the same outputstream for each client.
-					out = new ObjectOutputStream(new DataOutputStream(s.getOutputStream()));
-					out.writeObject(o);
-					out.flush();
+				for (Socket s: sockets.keySet()) { //	This is attempting to recreate the outputstream for each client.
+					ObjectOutputStream output = sockets.get(s);
+					output.writeObject(o);
+					output.flush();
 					Thread.yield();
 				}
 			}
 		} catch (EOFException e) {
 			addStatus("Client " + socket.getInetAddress().getHostName() + " disconnected");
-			clients.remove(socket);
+			sockets.remove(socket);
 		} catch (IOException e) {
 			addStatus("While waiting for client data: " + e.toString());
-			clients.remove(socket);
+			sockets.remove(socket);
 		} catch (ClassNotFoundException e) {
 			addStatus("While waiting for client data: " + e.toString());
 		}
-		clients.remove(socket);
+		sockets.remove(socket);
 	}
 	
 	public void addStatus(String s) {
