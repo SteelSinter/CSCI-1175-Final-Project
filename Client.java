@@ -1,6 +1,7 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -31,6 +32,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class Client extends Application {
@@ -43,6 +45,9 @@ public class Client extends Application {
 	TextField tfAddress = new TextField();
 	TextField tfUserName = new TextField();
 	
+	File file;
+	Image image;
+	
 	ObjectOutputStream out;
 	ObjectInputStream in;
 	
@@ -50,7 +55,15 @@ public class Client extends Application {
 	public void start(Stage mainStage) {
 		GridPane gridPane = new GridPane();
 		Button btConnect = new Button("Connect");
-		// TODO: Add FIle chooser
+		Button btFileChooser = new Button("Choose Image");
+		Button btSendImage = new Button("Send image");
+		FileChooser fileChooser = new FileChooser();
+		
+		fileChooser.getExtensionFilters().addAll(
+			     new FileChooser.ExtensionFilter("JPG", "*.jpg")
+			    , new FileChooser.ExtensionFilter("PNG", "*.png")
+			    , new FileChooser.ExtensionFilter("JPEG" , "*.jpeg")
+		);
 		
 	//	taChat.setEditable(false);
 	//	taChat.setPrefWidth(300);
@@ -75,7 +88,8 @@ public class Client extends Application {
 		
 		gridPane.add(spChat, 0, 0);
 		gridPane.add(taMessage, 0, 1);
-		gridPane.add(new VBox(tfPort, tfAddress, btConnect, tfUserName), 1, 0);
+		gridPane.add(new VBox(tfPort, tfAddress, btConnect, tfUserName, btFileChooser, 
+				btSendImage), 1, 0);
 		
 		spChat.setContent(chat);
 		
@@ -96,6 +110,33 @@ public class Client extends Application {
 					addStatus(ex.toString());
 				}
 			}).start();
+		});
+		
+		btFileChooser.setOnAction(e -> {
+			try {
+				file = fileChooser.showOpenDialog(mainStage);
+				btFileChooser.setText(file.getName());
+				addStatus(file.getName() + " chosen");
+			} catch (Exception ex) {
+				addStatus(e.toString());
+				btFileChooser.setText("Choose Image");
+			}
+		});
+		
+		btSendImage.setOnAction(e -> {
+			try {
+				System.out.println("creating image object");
+				image = new Image(file.getPath());
+				System.out.println("Attempting to send image");
+				writeJPG(toBufferedImage(image) , out, 1);
+				System.out.println("Image sent");
+			} catch (IOException ex) {
+				addStatus(ex.toString());
+			} catch (NullPointerException ex) {
+				addStatus("NullPointerException");
+			} catch (Exception ex) {
+				addStatus(ex.getStackTrace());
+			}
 		});
 		
 		taMessage.setOnKeyPressed(e -> {
@@ -131,11 +172,12 @@ public class Client extends Application {
 	
 	public void sendMessage() {
 		try {
-			if (false/** can send image **/) {
-				// send image
+			if (image != null) {
+				out.writeObject(new Message(image, tfUserName.getText()));
+				image = null;
 			}
 			else {
-				out.writeObject(new Label(taMessage.getText()));
+				out.writeObject(new Message(taMessage.getText(), tfUserName.getText()));
 				taMessage.clear();
 			}
 			out.flush();
@@ -152,11 +194,9 @@ public class Client extends Application {
 	}
 	
 	public void connectToServer(Socket socket) throws IOException {
-		System.out.println("Connecting to server");
+		addStatus("Connecting to server...");
 		out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));
 		in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
-		System.out.println("out toString:");
-		System.out.println(out.toString());
 		new Thread(() -> {		
 			try {
 				listenForData();
@@ -196,11 +236,33 @@ public class Client extends Application {
 		    IIOImage iioimage = new IIOImage(bufferedImage, null, null);
 		    imageWriter.write(null, iioimage, imageWriteParam);
 		    imageOutputStream.flush();
-		}
+	}
+	
+	public static BufferedImage toBufferedImage(Image image) {
+	    BufferedImage bImage = javafx.embed.swing.SwingFXUtils.fromFXImage(image, null);
+	    return bImage;
+	}
 
 }
 
 class Message implements java.io.Serializable {
 	String s = null;
 	Image i = null;
+	String name = null;
+	
+	Message(String s, String userName) {
+		this.s = s;
+		this.name = userName;
+	}
+	
+	Message(Image i, String userName) {
+		this.i = i;
+		this.s = i.toString();
+		this.name = userName;
+	}
+	
+	@Override
+	public String toString() {
+		return name + ": " + s;
+	}
 }
