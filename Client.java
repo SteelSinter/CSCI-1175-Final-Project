@@ -102,6 +102,7 @@ public class Client extends Application {
 							tfAddress.getText().trim()) , Integer.valueOf(tfPort.getText()));
 					addStatus("Connected to " + socket.getInetAddress());
 					connectToServer(socket);
+					spChat.setVvalue(1);
 				} catch (NumberFormatException ex) {
 					addStatus("Invalid port or address");
 				} catch (UnknownHostException ex) {
@@ -126,7 +127,7 @@ public class Client extends Application {
 		btSendImage.setOnAction(e -> {
 			try {
 				System.out.println("creating image object");
-				image = new Image(file.getPath());
+				image = new Image(file.toURI().toString());
 				System.out.println("Attempting to send image");
 				writeJPG(toBufferedImage(image) , out, 1);
 				System.out.println("Image sent");
@@ -142,6 +143,7 @@ public class Client extends Application {
 		taMessage.setOnKeyPressed(e -> {
 			if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
 				new Thread(() ->{
+					System.out.println("Invoking sendMessage()");
 					sendMessage();
 				}).start();
 			}
@@ -154,7 +156,7 @@ public class Client extends Application {
 	
 	public void addStatus(Object o) {
 		Platform.runLater(() -> {
-			chat.getChildren().add((Node) o);
+			chat.getChildren().add(new Label(o.toString()));
 			spChat.setVvalue(1.0d);
 		});
 	}
@@ -172,14 +174,8 @@ public class Client extends Application {
 	
 	public void sendMessage() {
 		try {
-			if (image != null) {
-				out.writeObject(new Message(image, tfUserName.getText()));
-				image = null;
-			}
-			else {
-				out.writeObject(new Message(taMessage.getText(), tfUserName.getText()));
-				taMessage.clear();
-			}
+			out.writeObject(new Message(taMessage.getText(), tfUserName.getText()));
+			taMessage.clear();
 			out.flush();
 			//out.writeUTF(tfUserName.getText() + ": " + taMessage.getText().trim());
 			//out.flush();
@@ -247,17 +243,10 @@ public class Client extends Application {
 
 class Message implements java.io.Serializable {
 	String s = null;
-	Image i = null;
 	String name = null;
 	
 	Message(String s, String userName) {
 		this.s = s;
-		this.name = userName;
-	}
-	
-	Message(Image i, String userName) {
-		this.i = i;
-		this.s = i.toString();
 		this.name = userName;
 	}
 	

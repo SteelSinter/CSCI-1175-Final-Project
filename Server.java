@@ -88,10 +88,13 @@ public class Server extends Application {
 			while (!serverStopped) {
 				Object o = in.readObject();
 				addStatus(o.toString());
+				while (in.available() > 1) {
+					addStatus(String.valueOf(in.read()));
+				}
 				for (Socket s: clients) {
-					ObjectOutputStream data = new ObjectOutputStream(new DataOutputStream(s.getOutputStream()));
-					data.writeObject(o);
-					data.flush();
+					ObjectOutputStream output = new ObjectOutputStream(new DataOutputStream(s.getOutputStream()));
+					output.writeObject(o);
+					output.flush();
 					Thread.yield();
 				}
 			}
