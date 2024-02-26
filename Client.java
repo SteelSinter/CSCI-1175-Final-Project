@@ -2,12 +2,25 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Iterator;
+import java.awt.image.BufferedImage;
+
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -15,6 +28,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -27,8 +41,8 @@ public class Client extends Application {
 	TextField tfPort = new TextField();
 	TextField tfAddress = new TextField();
 	TextField tfUserName = new TextField();
-	DataInputStream in;
-	DataOutputStream out;
+	ObjectOutputStream out;
+	ObjectInputStream in;
 	
 	@Override
 	public void start(Stage mainStage) {
@@ -59,6 +73,7 @@ public class Client extends Application {
 		gridPane.add(spChat, 0, 0);
 		gridPane.add(taMessage, 0, 1);
 		gridPane.add(new VBox(tfPort, tfAddress, btConnect, tfUserName), 1, 0);
+		
 		spChat.setContent(chat);
 		
 		Scene scene = new Scene(gridPane, 500, 300);
@@ -93,37 +108,53 @@ public class Client extends Application {
 		mainStage.show();
 	}
 	
+	public void addStatus(Object o) {
+		Platform.runLater(() -> {
+			chat.getChildren().add((Node) o);
+			spChat.setVvalue(1.0d);
+		});
+	}
+	
 	public void addStatus(String s) {
 		Platform.runLater(() -> {
 			Label msg = new Label(s + "\r\n");
 			msg.setMaxHeight(1);
 			chat.getChildren().add(msg);
 			VBox.setMargin(msg, new javafx.geometry.Insets(1));
-			spChat.setVvalue(1.0);
+			spChat.setVvalue(1.0d);
 		});
 		//taChat.appendText(s + "\r\n");
 	}
 	
 	public void sendMessage() {
 		try {
-			out.writeUTF(tfUserName.getText() + ": " + taMessage.getText().trim());
+			if (false/** can send image **/) {
+				// send image
+			}
+			else {
+				out.writeObject(new Label(taMessage.getText()));
+				taMessage.clear();
+			}
 			out.flush();
-			taMessage.clear();
+			//out.writeUTF(tfUserName.getText() + ": " + taMessage.getText().trim());
+			//out.flush();
+			//taMessage.clear();
 		} catch (SocketException ex) {
 			addStatus("Server disconnected");
-		}
-		catch (IOException ex) {
+		} catch (IOException ex) {
 			addStatus(ex.toString());
-		}
-		catch (NullPointerException ex) {
+		} catch (NullPointerException ex) {
 			addStatus("Message was not sent");
 		}
 	}
 	
 	public void connectToServer(Socket socket) throws IOException {
-		in = new DataInputStream(socket.getInputStream());
-		out = new DataOutputStream(socket.getOutputStream());
-		new Thread(() -> {
+		System.out.println("Connecting to server");
+		out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));
+		in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
+		System.out.println("out toString:");
+		System.out.println(out.toString());
+		new Thread(() -> {		
 			try {
 				listenForData();
 			} catch (EOFException e) {
@@ -137,7 +168,8 @@ public class Client extends Application {
 	public void listenForData() throws Exception {
 		while (true) {
 			Thread.sleep(100);
-			addStatus(in.readUTF());
+			Object o = in.readObject();
+			addStatus(o);
 		}
 	}
 
@@ -145,5 +177,27 @@ public class Client extends Application {
 		Application.launch(args);
 
 	}
+	
+	public static void writeJPG(BufferedImage bufferedImage, OutputStream outputStream, 
+			float quality) throws IOException {
+		
+		    Iterator<ImageWriter> iterator =
+		        ImageIO.getImageWritersByFormatName("jpg");
+		    ImageWriter imageWriter = iterator.next();
+		    ImageWriteParam imageWriteParam = imageWriter.getDefaultWriteParam();
+		    imageWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+		    imageWriteParam.setCompressionQuality(quality);
+		    ImageOutputStream imageOutputStream =
+		        new MemoryCacheImageOutputStream(outputStream);
+		    imageWriter.setOutput(imageOutputStream);
+		    IIOImage iioimage = new IIOImage(bufferedImage, null, null);
+		    imageWriter.write(null, iioimage, imageWriteParam);
+		    imageOutputStream.flush();
+		}
 
+}
+
+class Message implements java.io.Serializable {
+	String s = null;
+	Image i = null;
 }

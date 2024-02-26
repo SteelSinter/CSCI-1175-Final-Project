@@ -2,6 +2,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -76,19 +78,20 @@ public class Server extends Application {
 	}
 	
 	public void connectToClient(Socket socket) {
-		DataInputStream in;
-		DataOutputStream out;
+		ObjectInputStream in;
+		ObjectOutputStream out;
 		clients.add(socket);
 		try {
 			addStatus("Connected to " + socket.getInetAddress());
-			in = new DataInputStream(socket.getInputStream());
-			out = new DataOutputStream(socket.getOutputStream());
+			in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
+			out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));
 			while (!serverStopped) {
-				String str = in.readUTF();
-				addStatus(str);
+				Object o = in.readObject();
+				addStatus(o.toString());
 				for (Socket s: clients) {
-					DataOutputStream data = new DataOutputStream(s.getOutputStream());
-					data.writeUTF(str);
+					ObjectOutputStream data = new ObjectOutputStream(new DataOutputStream(s.getOutputStream()));
+					data.writeObject(o);
+					data.flush();
 					Thread.yield();
 				}
 			}
@@ -98,6 +101,8 @@ public class Server extends Application {
 		} catch (IOException e) {
 			addStatus(e.toString());
 			clients.remove(socket);
+		} catch (ClassNotFoundException e) {
+			addStatus(e.toString());
 		}
 		clients.remove(socket);
 	}
