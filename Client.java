@@ -12,6 +12,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
@@ -19,9 +20,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class Client extends Application {
-	public TextArea taChat = new TextArea();
-	public TextArea taMessage = new TextArea();
-	public VBox chat = new VBox();
+	//public TextArea taChat = new TextArea();
+	public TextArea taMessage = new TextArea(); // Where the user enters text to send
+	public VBox chat = new VBox(); // Content for the chat
+	public ScrollPane spChat = new ScrollPane(); // Scroll pane to contain the chat
 	TextField tfPort = new TextField();
 	TextField tfAddress = new TextField();
 	TextField tfUserName = new TextField();
@@ -31,14 +33,17 @@ public class Client extends Application {
 	@Override
 	public void start(Stage mainStage) {
 		GridPane gridPane = new GridPane();
-		ScrollPane spChat = new ScrollPane();
 		Button btConnect = new Button("Connect");
 		
-		taChat.setEditable(false);
-		taChat.setPrefWidth(300);
-		taChat.setWrapText(true);
-		taChat.setMaxWidth(400);
-		taChat.setPrefHeight(250);
+	//	taChat.setEditable(false);
+	//	taChat.setPrefWidth(300);
+	//	taChat.setWrapText(true);
+	//	taChat.setMaxWidth(400);
+	//	taChat.setPrefHeight(250);
+		
+		//chat.setPadding(new javafx.geometry.Insets(1));
+		chat.setPrefHeight(200);
+		chat.setSpacing(1);
 		
 		taMessage.setMaxHeight(50);
 		taMessage.setMaxWidth(400);
@@ -90,7 +95,11 @@ public class Client extends Application {
 	
 	public void addStatus(String s) {
 		Platform.runLater(() -> {
-			chat.getChildren().add(new Label(s + "\r\n"));
+			Label msg = new Label(s + "\r\n");
+			msg.setMaxHeight(1);
+			chat.getChildren().add(msg);
+			VBox.setMargin(msg, new javafx.geometry.Insets(1));
+			spChat.setVvalue(1.0);
 		});
 		//taChat.appendText(s + "\r\n");
 	}
