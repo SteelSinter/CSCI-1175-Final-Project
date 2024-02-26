@@ -35,12 +35,14 @@ import javafx.stage.Stage;
 
 public class Client extends Application {
 	//public TextArea taChat = new TextArea();
-	public TextArea taMessage = new TextArea(); // Where the user enters text to send
-	public VBox chat = new VBox(); // Content for the chat
-	public ScrollPane spChat = new ScrollPane(); // Scroll pane to contain the chat
+	TextArea taMessage = new TextArea(); // Where the user enters text to send
+	VBox chat = new VBox(); // Content for the chat
+	ScrollPane spChat = new ScrollPane(); // Scroll pane to contain the chat
+	
 	TextField tfPort = new TextField();
 	TextField tfAddress = new TextField();
 	TextField tfUserName = new TextField();
+	
 	ObjectOutputStream out;
 	ObjectInputStream in;
 	
@@ -48,6 +50,7 @@ public class Client extends Application {
 	public void start(Stage mainStage) {
 		GridPane gridPane = new GridPane();
 		Button btConnect = new Button("Connect");
+		// TODO: Add FIle chooser
 		
 	//	taChat.setEditable(false);
 	//	taChat.setPrefWidth(300);
