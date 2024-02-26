@@ -7,8 +7,11 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
@@ -18,6 +21,7 @@ import javafx.stage.Stage;
 public class Client extends Application {
 	public TextArea taChat = new TextArea();
 	public TextArea taMessage = new TextArea();
+	public VBox chat = new VBox();
 	TextField tfPort = new TextField();
 	TextField tfAddress = new TextField();
 	TextField tfUserName = new TextField();
@@ -27,6 +31,7 @@ public class Client extends Application {
 	@Override
 	public void start(Stage mainStage) {
 		GridPane gridPane = new GridPane();
+		ScrollPane spChat = new ScrollPane();
 		Button btConnect = new Button("Connect");
 		
 		taChat.setEditable(false);
@@ -46,9 +51,10 @@ public class Client extends Application {
 		tfUserName.setPromptText("User name");
 		tfUserName.setText("User");
 		
-		gridPane.add(taChat, 0, 0);
+		gridPane.add(spChat, 0, 0);
 		gridPane.add(taMessage, 0, 1);
 		gridPane.add(new VBox(tfPort, tfAddress, btConnect, tfUserName), 1, 0);
+		spChat.setContent(chat);
 		
 		Scene scene = new Scene(gridPane, 500, 300);
 		
@@ -83,7 +89,10 @@ public class Client extends Application {
 	}
 	
 	public void addStatus(String s) {
-		taChat.appendText(s + "\r\n");
+		Platform.runLater(() -> {
+			chat.getChildren().add(new Label(s + "\r\n"));
+		});
+		//taChat.appendText(s + "\r\n");
 	}
 	
 	public void sendMessage() {
