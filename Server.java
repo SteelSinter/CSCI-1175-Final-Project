@@ -95,6 +95,7 @@ public class Server extends Application {
 					ObjectOutputStream output = new ObjectOutputStream(new DataOutputStream(s.getOutputStream()));
 					output.writeObject(o);
 					output.flush();
+					output.close();
 					Thread.yield();
 				}
 			}
@@ -102,10 +103,10 @@ public class Server extends Application {
 			addStatus("Client " + socket.getInetAddress().getHostName() + " disconnected");
 			clients.remove(socket);
 		} catch (IOException e) {
-			addStatus(e.toString());
+			addStatus("While waiting for client data: " + e.toString());
 			clients.remove(socket);
 		} catch (ClassNotFoundException e) {
-			addStatus(e.toString());
+			addStatus("While waiting for client data: " + e.toString());
 		}
 		clients.remove(socket);
 	}

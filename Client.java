@@ -30,6 +30,7 @@ import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -196,19 +197,30 @@ public class Client extends Application {
 		new Thread(() -> {		
 			try {
 				listenForData();
-			} catch (EOFException e) {
-				addStatus("Server disconnected");
 			} catch (Exception e) {
 				addStatus(e.toString());
 			}
 		}).start();
 	}
 	
-	public void listenForData() throws Exception {
+	public void listenForData() {
 		while (true) {
-			Thread.sleep(100);
-			Object o = in.readObject();
-			addStatus(o);
+			Object o;
+			try {
+				Thread.sleep(100);
+				o = in.readObject();
+				addStatus(o.toString());
+				if (o instanceof BufferedImage) {
+					addStatus("BufferedImage recieved");
+				}
+			} catch (ClassNotFoundException | IOException e) {
+				// TODO Auto-generated catch block
+				o = null;
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				System.out.println(e.toString());
+			}
+			// in.reset();
 		}
 	}
 
