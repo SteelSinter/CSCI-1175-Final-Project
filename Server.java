@@ -84,18 +84,14 @@ public class Server extends Application {
 		try {
 			addStatus("Connected to " + socket.getInetAddress());
 			in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
-			out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));
+			out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));//////////
 			while (!serverStopped) {
-				Object o = in.readObject();
-				addStatus(o.toString());
-				while (in.available() > 1) {
-					addStatus(String.valueOf(in.read()));
-				}
-				for (Socket s: clients) {
-					ObjectOutputStream output = new ObjectOutputStream(new DataOutputStream(s.getOutputStream()));
-					output.writeObject(o);
-					output.flush();
-					output.close();
+				Object o = in.readObject();//	The problem is that this needs a way to get each output
+				addStatus(o.toString()); // 	stream to send the objects back to the clients.
+				for (Socket s: clients) { //	This is attempting to use the same outputstream for each client.
+					out = new ObjectOutputStream(new DataOutputStream(s.getOutputStream()));
+					out.writeObject(o);
+					out.flush();
 					Thread.yield();
 				}
 			}

@@ -196,16 +196,16 @@ public class Client extends Application {
 		in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
 		new Thread(() -> {		
 			try {
-				listenForData();
+				listenForData(socket);
 			} catch (Exception e) {
 				addStatus(e.toString());
 			}
 		}).start();
 	}
 	
-	public void listenForData() {
+	public void listenForData(Socket socket) {
+		Object o;
 		while (true) {
-			Object o;
 			try {
 				Thread.sleep(100);
 				o = in.readObject();
