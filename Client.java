@@ -1,3 +1,4 @@
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -126,7 +127,8 @@ public class Client extends Application {
 				System.out.println("creating image object");
 				image = new Image(file.toURI().toString());
 				System.out.println("Attempting to send image");
-				writeJPG(toBufferedImage(image) , out, 1);
+				writeImage(out, toBufferedImage(image));
+				//writeJPG(toBufferedImage(image) , out, 1);
 				System.out.println("Image sent");
 			} catch (IOException ex) {
 				addStatus(ex.toString());
@@ -196,6 +198,14 @@ public class Client extends Application {
 				addStatus(e.toString());
 			}
 		}).start();
+		
+		new Thread(() -> {		
+			try {
+				//
+			} catch (Exception e) {
+				addStatus(e.toString());
+			}
+		}).start();
 	}
 	
 	public void listenForData(Socket socket) {
@@ -205,8 +215,8 @@ public class Client extends Application {
 				Thread.sleep(100);
 				o = in.readObject();
 				addStatus(o.toString());
-				if (o instanceof BufferedImage) {
-					addStatus("BufferedImage recieved");
+				if (o instanceof serializableImage) {
+					addStatus("image recieived");
 				}
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -225,27 +235,18 @@ public class Client extends Application {
 			// in.reset();
 		}
 	}
+	
+	public void writeImage(ObjectOutputStream out, BufferedImage bufferedImage) throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ImageIO.write(bufferedImage, "jpg", bos);
+		byte[] data = bos.toByteArray();
+		out.writeObject(new serializableImage(data));
+		out.flush();
+	}
 
 	public static void main(String[] args) {
 		Application.launch(args);
 
-	}
-	
-	public static void writeJPG(BufferedImage bufferedImage, ObjectOutputStream outputStream, 
-			float quality) throws IOException {
-		
-		    Iterator<ImageWriter> iterator =
-		        ImageIO.getImageWritersByFormatName("jpg");
-		    ImageWriter imageWriter = iterator.next();
-		    ImageWriteParam imageWriteParam = imageWriter.getDefaultWriteParam();
-		    imageWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-		    imageWriteParam.setCompressionQuality(quality);
-		    ImageOutputStream imageOutputStream =
-		        new MemoryCacheImageOutputStream(outputStream);
-		    imageWriter.setOutput(imageOutputStream);
-		    IIOImage iioimage = new IIOImage(bufferedImage, null, null);
-		    imageWriter.write(null, iioimage, imageWriteParam);
-		    imageOutputStream.flush();
 	}
 	
 	public static BufferedImage toBufferedImage(Image image) {
@@ -267,5 +268,17 @@ class Message implements java.io.Serializable {
 	@Override
 	public String toString() {
 		return name + ": " + s;
+	}
+}
+
+class serializableImage implements java.io.Serializable {
+	byte[] data;
+	
+	serializableImage(byte[] bytes) {
+		data = bytes;
+	}
+	
+	byte[] getData() {
+		return data;
 	}
 }

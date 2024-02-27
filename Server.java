@@ -1,3 +1,4 @@
+import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -88,10 +89,10 @@ public class Server extends Application {
 			sockets.put(socket, out); // Add the socket and OutputStream to a list.
 			while (!serverStopped) {
 				addStatus("Waiting for data...");
-				Object o = in.readObject();
+				Object o = null;
+				o = in.readObject();
 				addStatus(o.toString());
-				addStatus("Read object");
-				addStatus("Sending object...");
+				addStatus("Sending data...");
 				
 				for (Socket s: sockets.keySet()) {
 					addStatus("Sending to " + s.toString());
@@ -104,6 +105,8 @@ public class Server extends Application {
 					addStatus("Done");
 				}
 			}
+		} catch (NullPointerException e) {
+			addStatus("Null object");
 		} catch (EOFException e) {
 			addStatus("Client " + socket.getInetAddress().getHostName() + " disconnected");
 			sockets.remove(socket);
@@ -114,6 +117,10 @@ public class Server extends Application {
 			addStatus("While waiting for client data: " + e.toString());
 		}
 		sockets.remove(socket);
+	}
+	
+	public void listenForImages() {
+		
 	}
 	
 	public void addStatus(String s) {
