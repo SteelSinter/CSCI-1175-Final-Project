@@ -60,11 +60,7 @@ public class Client extends Application {
 		Button btSendImage = new Button("Send image");
 		FileChooser fileChooser = new FileChooser();
 		
-		fileChooser.getExtensionFilters().addAll(
-			     new FileChooser.ExtensionFilter("JPG", "*.jpg")
-			    , new FileChooser.ExtensionFilter("PNG", "*.png")
-			    , new FileChooser.ExtensionFilter("JPEG" , "*.jpeg")
-		);
+		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JPG", "*.jpg"));
 		
 	//	taChat.setEditable(false);
 	//	taChat.setPrefWidth(300);
@@ -164,10 +160,8 @@ public class Client extends Application {
 	
 	public void addStatus(String s) {
 		Platform.runLater(() -> {
-			Label msg = new Label(s + "\r\n");
-			msg.setMaxHeight(1);
+			Label msg = new Label(s);
 			chat.getChildren().add(msg);
-			VBox.setMargin(msg, new javafx.geometry.Insets(1));
 			spChat.setVvalue(1.0d);
 		});
 		//taChat.appendText(s + "\r\n");
@@ -194,6 +188,7 @@ public class Client extends Application {
 		addStatus("Connecting to server...");
 		out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));
 		in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
+		addStatus("Connected to " + socket.getInetAddress().getHostName());
 		new Thread(() -> {		
 			try {
 				listenForData(socket);
@@ -213,12 +208,19 @@ public class Client extends Application {
 				if (o instanceof BufferedImage) {
 					addStatus("BufferedImage recieved");
 				}
-			} catch (ClassNotFoundException | IOException e) {
+			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				o = null;
 				e.printStackTrace();
 			} catch (InterruptedException e) {
 				System.out.println(e.toString());
+			} catch (SocketException e) {
+				o = null;
+				e.printStackTrace();
+				break;
+			} catch (IOException e) {
+				o = null;
+				e.printStackTrace();
 			}
 			// in.reset();
 		}
@@ -229,7 +231,7 @@ public class Client extends Application {
 
 	}
 	
-	public static void writeJPG(BufferedImage bufferedImage, OutputStream outputStream, 
+	public static void writeJPG(BufferedImage bufferedImage, ObjectOutputStream outputStream, 
 			float quality) throws IOException {
 		
 		    Iterator<ImageWriter> iterator =

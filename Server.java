@@ -19,6 +19,7 @@ public class Server extends Application {
 	public ServerSocket serverSocket;
 	public TextArea ta = new TextArea();
 	public boolean serverStopped = false;
+	public ObjectOutputStream output;
 	java.util.HashMap<Socket, ObjectOutputStream> sockets = new java.util.HashMap<Socket, ObjectOutputStream>();
 	
 	@Override
@@ -86,13 +87,21 @@ public class Server extends Application {
 			out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));
 			sockets.put(socket, out); // Add the socket and OutputStream to a list.
 			while (!serverStopped) {
-				Object o = in.readObject();//	The problem is that this needs a way to get each output
-				addStatus(o.toString()); // 	stream to send the objects back to the clients.
-				for (Socket s: sockets.keySet()) { //	This is attempting to recreate the outputstream for each client.
-					ObjectOutputStream output = sockets.get(s);
+				addStatus("Waiting for data...");
+				Object o = in.readObject();
+				addStatus(o.toString());
+				addStatus("Read object");
+				addStatus("Sending object...");
+				
+				for (Socket s: sockets.keySet()) {
+					addStatus("Sending to " + s.toString());
+					output = sockets.get(s);
+					addStatus("Writing...");
 					output.writeObject(o);
+					addStatus("Flushing...");
 					output.flush();
 					Thread.yield();
+					addStatus("Done");
 				}
 			}
 		} catch (EOFException e) {
@@ -108,7 +117,7 @@ public class Server extends Application {
 	}
 	
 	public void addStatus(String s) {
-		ta.appendText(new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date()) + ": " + s + "\r\n");
+		ta.appendText(new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date()) + ": " + s + "\n");
 	}
 
 	public static void main(String[] args) {
