@@ -1,3 +1,4 @@
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -22,6 +23,7 @@ import javax.imageio.stream.MemoryCacheImageOutputStream;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -216,7 +218,7 @@ public class Client extends Application {
 				o = in.readObject();
 				addStatus(o.toString());
 				if (o instanceof serializableImage) {
-					addStatus("image recieived");
+					readImage((serializableImage) o);
 				}
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -243,19 +245,35 @@ public class Client extends Application {
 		out.writeObject(new serializableImage(data));
 		out.flush();
 	}
-
-	public static void main(String[] args) {
-		Application.launch(args);
-
+	
+	public void readImage(serializableImage image) throws IOException {
+		File file;
+		ByteArrayInputStream bis = new ByteArrayInputStream(image.getData());
+		BufferedImage outputImage = ImageIO.read(bis);
+		ImageView imageView = new ImageView(toImage(outputImage));
+		Platform.runLater(() -> {
+			chat.getChildren().add(imageView);
+		});
 	}
 	
 	public static BufferedImage toBufferedImage(Image image) {
 	    BufferedImage bImage = javafx.embed.swing.SwingFXUtils.fromFXImage(image, null);
 	    return bImage;
 	}
+	
+	public static Image toImage(BufferedImage bImage) {
+		Image image = SwingFXUtils.toFXImage(bImage, null);
+		return image;
+	}
+
+	public static void main(String[] args) {
+		Application.launch(args);
+
+	}
 
 }
 
+@SuppressWarnings("serial")
 class Message implements java.io.Serializable {
 	String s = null;
 	String name = null;
@@ -271,6 +289,7 @@ class Message implements java.io.Serializable {
 	}
 }
 
+@SuppressWarnings("serial")
 class serializableImage implements java.io.Serializable {
 	byte[] data;
 	
