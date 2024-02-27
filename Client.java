@@ -38,12 +38,27 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
+/**
+ * 
+ * @author James Jesus
+ * 
+ * Client connects to a server and can send text messages and images.
+ *
+ */
 public class Client extends Application {
 	//public TextArea taChat = new TextArea();
-	TextArea taMessage = new TextArea(); // Where the user enters text to send
-	VBox chat = new VBox(); // Content for the chat
-	ScrollPane spChat = new ScrollPane(); // Scroll pane to contain the chat
+	/**
+	 * User text input.
+	 */
+	TextArea taMessage = new TextArea();
+	/**
+	 * VBox to contain elements for the chat.
+	 */
+	VBox chat = new VBox();
+	/**
+	 *  Scroll pane to contain the chat
+	 */
+	ScrollPane spChat = new ScrollPane();
 	
 	TextField tfPort = new TextField();
 	TextField tfAddress = new TextField();
@@ -54,7 +69,9 @@ public class Client extends Application {
 	
 	ObjectOutputStream out;
 	ObjectInputStream in;
-	
+	/**
+	 * Start method.
+	 */
 	@Override
 	public void start(Stage mainStage) {
 		GridPane gridPane = new GridPane();
@@ -157,14 +174,20 @@ public class Client extends Application {
 		mainStage.setTitle("Client");
 		mainStage.show();
 	}
-	
+	/**
+	 * Append the toString() of an object to the VBox.
+	 * @param o Object to append.
+	 */
 	public void addStatus(Object o) {
 		Platform.runLater(() -> {
 			chat.getChildren().add(new Label(o.toString()));
 			spChat.setVvalue(1.0d);
 		});
 	}
-	
+	/**
+	 * Append text to the chat by creating a Label and adding it to the VBox.
+	 * @param s String to append.
+	 */
 	public void addStatus(String s) {
 		Platform.runLater(() -> {
 			Label msg = new Label(s);
@@ -173,7 +196,9 @@ public class Client extends Application {
 		});
 		//taChat.appendText(s + "\r\n");
 	}
-	
+	/**
+	 * Create a new Message and send into the outputstream.
+	 */
 	public void sendMessage() {
 		try {
 			out.writeObject(new Message(taMessage.getText(), tfUserName.getText()));
@@ -190,7 +215,12 @@ public class Client extends Application {
 			addStatus("Message was not sent");
 		}
 	}
-	
+	/**
+	 * Establish a connection with a Server and create input/output streams.
+	 * Also invokes listenForData().
+	 * @param socket Socket to connect to.
+	 * @throws IOException
+	 */
 	public void connectToServer(Socket socket) throws IOException {
 		addStatus("Connecting to server...");
 		out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));
@@ -212,7 +242,10 @@ public class Client extends Application {
 			}
 		}).start();
 	}
-	
+	/**
+	 * Wait for data from the server to add to the chat.
+	 * @param socket Socket to listen from.
+	 */
 	public void listenForData(Socket socket) {
 		Object o;
 		while (true) {
@@ -240,7 +273,13 @@ public class Client extends Application {
 			// in.reset();
 		}
 	}
-	
+	/**
+	 * Write an image to the output stream by converting it to a byte array and storing
+	 * that array in a serializableImage object.
+	 * @param out Output stream to use.
+	 * @param bufferedImage Buffered image to send.
+	 * @throws IOException
+	 */
 	public void writeImage(ObjectOutputStream out, BufferedImage bufferedImage) throws IOException {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ImageIO.write(bufferedImage, "jpg", bos);
@@ -248,7 +287,12 @@ public class Client extends Application {
 		out.writeObject(new serializableImage(data));
 		out.flush();
 	}
-	
+	/**
+	 * Reads a serializableImage object from the input stream and converts the byte array
+	 * into an image view to add to the chat.
+	 * @param image SerializableImage to read byte[] from.
+	 * @throws IOException
+	 */
 	public void readImage(serializableImage image) throws IOException {
 		File file;
 		ByteArrayInputStream bis = new ByteArrayInputStream(image.getData());
@@ -258,12 +302,20 @@ public class Client extends Application {
 			chat.getChildren().add(imageView);
 		});
 	}
-	
+	/**
+	 * Convert an Image into a BufferedImage.
+	 * @param image Image to convert.
+	 * @return
+	 */
 	public static BufferedImage toBufferedImage(Image image) {
 	    BufferedImage bImage = javafx.embed.swing.SwingFXUtils.fromFXImage(image, null);
 	    return bImage;
 	}
-	
+	/**
+	 * Convert a BufferedImage to an Image.
+	 * @param bImage BufferedImage to convert.
+	 * @return
+	 */
 	public static Image toImage(BufferedImage bImage) {
 		Image image = SwingFXUtils.toFXImage(bImage, null);
 		return image;
@@ -275,12 +327,20 @@ public class Client extends Application {
 	}
 
 }
-
+/**
+ * Object that stores a message and the username of the sender.
+ * @author James Jesus
+ *
+ */
 @SuppressWarnings("serial")
 class Message implements java.io.Serializable {
 	String s = null;
 	String name = null;
-	
+	/**
+	 * Create a message.
+	 * @param s Message String.
+	 * @param userName Username to attach.
+	 */
 	Message(String s, String userName) {
 		this.s = s;
 		this.name = userName;
@@ -291,15 +351,25 @@ class Message implements java.io.Serializable {
 		return name + ": " + s;
 	}
 }
-
+/**
+ * Object that contains a byte[] for an image.
+ * @author James Jesus
+ *
+ */
 @SuppressWarnings("serial")
 class serializableImage implements java.io.Serializable {
 	byte[] data;
-	
+	/**
+	 * Create a SerializableImage with a byte[]
+	 * @param bytes Byte array storing the image.
+	 */
 	serializableImage(byte[] bytes) {
 		data = bytes;
 	}
-	
+	/**
+	 * 
+	 * @return byte[] with image data.
+	 */
 	byte[] getData() {
 		return data;
 	}

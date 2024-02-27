@@ -15,14 +15,32 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
+/**
+ * 
+ * @author James Jesus
+ * 2/21/24
+ * 
+ * Server can connect to multiple clients using a thread for each.
+ *
+ */
 public class Server extends Application {
 	public ServerSocket serverSocket;
+	/**
+	 * TextArea to show chat history and debug messsages.
+	 */
 	public TextArea ta = new TextArea();
+	/**
+	 * Indicates wether the server has been stopped.
+	 */
 	public boolean serverStopped = false;
 	public ObjectOutputStream output;
+	/**
+	 * HashMap to store sockets and the ObjectOutputStreams for those Objects.
+	 */
 	java.util.HashMap<Socket, ObjectOutputStream> sockets = new java.util.HashMap<Socket, ObjectOutputStream>();
-	
+	/**
+	 * Start method
+	 */
 	@Override
 	public void start(Stage mainStage) {
 		VBox pane = new VBox();
@@ -65,7 +83,9 @@ public class Server extends Application {
 		mainStage.show();
 		
 	}
-	
+	/**
+	 * Thread to wait for clients to connect and make a new thread for that client.
+	 */
 	public void waitForClients() {
 		while (!serverStopped) {
 			try {
@@ -78,7 +98,11 @@ public class Server extends Application {
 			}
 		}
 	}
-	
+	/**
+	 * Establish input/output streams for a client. Waits for objects and sends
+	 * that object to each client.
+	 * @param socket Socket the client is connected to.
+	 */
 	public void connectToClient(Socket socket) {
 		ObjectInputStream in;
 		ObjectOutputStream out;
@@ -118,15 +142,17 @@ public class Server extends Application {
 		}
 		sockets.remove(socket);
 	}
-	
-	public void listenForImages() {
-		
-	}
-	
+	/**
+	 * Appends the String to the TextArea.
+	 * @param s String to append.
+	 */
 	public void addStatus(String s) {
 		ta.appendText(new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date()) + ": " + s + "\n");
 	}
-
+	/**
+	 * Main method.
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		Application.launch(args);
 
