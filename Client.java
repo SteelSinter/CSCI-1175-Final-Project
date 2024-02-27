@@ -63,7 +63,10 @@ public class Client extends Application {
 		Button btSendImage = new Button("Send image");
 		FileChooser fileChooser = new FileChooser();
 		
-		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JPG", "*.jpg"));
+		fileChooser.getExtensionFilters().addAll(
+				new FileChooser.ExtensionFilter("JPG", "*.jpg"),
+				new FileChooser.ExtensionFilter("JPEG", "*.jpeg")
+				);
 		
 	//	taChat.setEditable(false);
 	//	taChat.setPrefWidth(300);

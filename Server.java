@@ -88,21 +88,21 @@ public class Server extends Application {
 			out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()));
 			sockets.put(socket, out); // Add the socket and OutputStream to a list.
 			while (!serverStopped) {
-				addStatus("Waiting for data...");
+				//addStatus("Waiting for data...");
 				Object o = null;
 				o = in.readObject();
 				addStatus(o.toString());
-				addStatus("Sending data...");
+				//addStatus("Sending data...");
 				
 				for (Socket s: sockets.keySet()) {
-					addStatus("Sending to " + s.toString());
+					//addStatus("Sending to " + s.toString());
 					output = sockets.get(s);
-					addStatus("Writing...");
+					//addStatus("Writing...");
 					output.writeObject(o);
-					addStatus("Flushing...");
+					//addStatus("Flushing...");
 					output.flush();
 					Thread.yield();
-					addStatus("Done");
+					//addStatus("Done");
 				}
 			}
 		} catch (NullPointerException e) {
